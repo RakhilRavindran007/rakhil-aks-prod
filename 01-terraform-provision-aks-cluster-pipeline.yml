@@ -43,8 +43,8 @@ stages:
               backendAzureRmStorageAccountName: 'stoterraformdevwe432'
               backendAzureRmContainerName: 'tfstate'
               backendAzureRmKey: 'aks-prod.tfstate'
-          - task: TerraformTaskV3@3
+          - task: TerraformCLI@0
             inputs:
-              provider: 'azurerm'
               command: 'validate'
               workingDirectory: '$(System.DefaultWorkingDirectory)/terraform-manifest'
+              allowTelemetryCollection: false
