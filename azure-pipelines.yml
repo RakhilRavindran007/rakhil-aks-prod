@@ -11,25 +11,40 @@ pool:
 
 # Stage-1: Terraform Validate Stage
 ## Step-1: Publish Artifacts to Pipeline (Pipeline artifacts provide a way to share files between stages in a pipeline or between different pipelines. )
-## Step-2: Install Latest Terraform (0.13.5) (Ideally not needed if we use default Ubuntu Agents)
+## Step-2: Install Latest Terraform (Ideally not needed if we use default Ubuntu Agents)
 ## Step-3: Validate Terraform Manifests (terraform init, terraform validate)
 
 stages:
   - stage: TerraformValidate
     displayName: Terraform Validate
     jobs:
-      - job: TerraformValidate
-        displayName: Terraform Validate
+      - job: TerraformValidateJob
+        displayName: Terraform Validate Job
+        continueOnError: false
         steps:
-           - task: PublishPipelineArtifact@1
-             displayName: Publish Artifcats to Pipeline
-             inputs:
-               targetPath: '$(System.DefaultWorkingDirectory)/terraform-manifest'
-               artifact: 'terraform-manifest'
-               publishLocation: 'pipeline'
-            
-           - task: TerraformInstaller@0
-             displayName: Terraform Install
-             inputs:
-               terraformVersion: 'latest'
-           
+          - task: PublishPipelineArtifact@1
+            displayName: Publish Pipeline Artifacts
+            inputs:
+              targetPath: '$(System.DefaultWorkingDirectory)/terraform-manifests'
+              artifact: 'terraform-manifest'
+              publishLocation: 'pipeline'
+          - task: TerraformInstaller@0
+            displayName: Install Terraform
+            inputs:
+              terraformVersion: 'latest'
+          - task: TerraformTaskV3@3
+            displayName: Terraform Init
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/terraform-manifest'
+              backendServiceArm: 'spn-ado-azure-deployment'
+              backendAzureRmResourceGroupName: 'rg-terraform-dev-we-01'
+              backendAzureRmStorageAccountName: 'stoterraformdevwe432'
+              backendAzureRmContainerName: 'tfstate'
+              backendAzureRmKey: 'aks-prod.tfstate'
+          - task: TerraformTaskV3@3
+            inputs:
+              provider: 'azurerm'
+              command: 'validate'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/terraform-manifest'
