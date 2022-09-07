@@ -1,0 +1,35 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+# Stage-1: Terraform Validate Stage
+## Step-1: Publish Artifacts to Pipeline (Pipeline artifacts provide a way to share files between stages in a pipeline or between different pipelines. )
+## Step-2: Install Latest Terraform (0.13.5) (Ideally not needed if we use default Ubuntu Agents)
+## Step-3: Validate Terraform Manifests (terraform init, terraform validate)
+
+stages:
+  - stage: TerraformValidate
+    displayName: Terraform Validate
+    jobs:
+      - job: TerraformValidate
+        displayName: Terraform Validate
+        steps:
+           - task: PublishPipelineArtifact@1
+             displayName: Publish Artifcats to Pipeline
+             inputs:
+               targetPath: '$(System.DefaultWorkingDirectory)/terraform-manifest'
+               artifact: 'terraform-manifest'
+               publishLocation: 'pipeline'
+            
+           - task: TerraformInstaller@0
+             displayName: Terraform Install
+             inputs:
+               terraformVersion: 'latest'
+           
