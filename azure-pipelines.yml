@@ -9,6 +9,14 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
+# Define Variables
+variables:
+  - name: DEV_ENVIRONMENT
+    value: dev
+  - name: QA_ENVIRONMENT
+    value: qa
+    
+
 # Stage-1: Terraform Validate Stage
 ## Step-1: Publish Artifacts to Pipeline (Pipeline artifacts provide a way to share files between stages in a pipeline or between different pipelines. )
 ## Step-2: Install Latest Terraform (Ideally not needed if we use default Ubuntu Agents)
@@ -49,3 +57,59 @@ stages:
               provider: 'azurerm'
               command: 'validate'
               workingDirectory: '$(System.DefaultWorkingDirectory)/terraform-manifest'
+
+# Stage-2: Deploy Stages for Dev & QA
+# Deployment-1: Deploy Dev AKS Cluster
+## Step-1: Define Variables for environments
+## Step-2: Download SSH Secure File
+## Step-3: Terraform Initialize (State Storage to store in Azure Storage Account for Dev AKS Cluster)
+## Step-4: Terraform Plan (Create Plan)
+## Step-5: Terraform Apply (Use the plan created in previous step)
+
+
+#Download SSH Secure File
+  - stage: DeployDevAKSCluster
+    displayName: Deploy On Dev AKS Cluster
+    jobs:
+      - deployment: 
+        displayName: Deploy on Dev Cluster
+        pool:
+          vmImage: ubuntu-latest
+        environment: $(DEV_ENVIRONMENT)
+        strategy:
+         runOnce:
+            deploy:
+               steps:
+                 - task: DownloadSecureFile@1
+                   displayName: Download Secure File
+                   name: sshkey
+                   inputs:
+                     secureFile: 'ssh-key.pub'
+              
+                 - task: TerraformTaskV3@3
+                   displayName: Terraform Init
+                   inputs:
+                     provider: 'azurerm'
+                     command: 'init'
+                     workingDirectory: '$(Pipeline.Workspace)/terraform-manifest'
+                     backendServiceArm: 'spn-ado-azure-deployment'
+                     backendAzureRmResourceGroupName: 'rg-terraform-dev-we-01'
+                     backendAzureRmStorageAccountName: 'stoterraformdevwe432'
+                     backendAzureRmContainerName: 'tfstate'
+                     backendAzureRmKey: 'aks-$(DEV_ENVIRONMENT).tfstate'
+                 - task: TerraformTaskV3@3
+                   displayName: Terraform Plan
+                   inputs:
+                     provider: 'azurerm'
+                     command: 'plan'
+                     workingDirectory: '$(Pipeline.Workspace)/terraform-manifest'
+                     commandOptions: '-var vm-password=$(sshkey.secureFilePath) -var env=$(DEV_ENVIRONMENT) -out=$(Pipeline.Workspace)/terraform-manifest/$(DEV_ENVIRONMENT)-$(Build.BuildId).out'
+                     environmentServiceNameAzureRM: 'spn-ado-azure-deployment'
+                 - task: TerraformTaskV3@3
+                   displayName: Terraform Apply
+                   inputs:
+                     provider: 'azurerm'
+                     command: 'apply'
+                     workingDirectory: '$(Pipeline.Workspace)/terraform-manifest'
+                     commandOptions: '$(Pipeline.Workspace)/terraform-manifest/$(DEV_ENVIRONMENT)-$(Build.BuildId).out'''
+                     environmentServiceNameAzureRM: 'spn-ado-azure-deployment'
