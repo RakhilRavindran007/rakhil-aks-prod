@@ -109,7 +109,7 @@ stages:
                    displayName: Terraform Apply
                    inputs:
                      provider: 'azurerm'
-                     command: 'destroy'
+                     command: 'apply'
                      workingDirectory: '$(Pipeline.Workspace)/terraform-manifest'
                      commandOptions: '$(Pipeline.Workspace)/terraform-manifest/$(DEV_ENVIRONMENT)-$(Build.BuildId).out'
                      environmentServiceNameAzureRM: 'spn-ado-azure-deployment'
