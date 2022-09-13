@@ -71,6 +71,11 @@ resource "azurerm_kubernetes_cluster" "this" {
     docker_bridge_cidr = "172.17.0.1/16"
   }
 
+  ingress_application_gateway {
+    gateway_name = "appgw-${var.project}"
+    subnet_cidr = "10.0.5.0/24"
+  }
+
   oms_agent {
     log_analytics_workspace_id = azurerm_log_analytics_workspace.this.id
   }
