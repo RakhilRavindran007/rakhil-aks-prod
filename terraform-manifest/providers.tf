@@ -14,12 +14,13 @@ terraform {
     }
   }
 
-  /*backend "azurerm" {
+  backend "azurerm" {/*
     resource_group_name  = "rg-terraform-dev-we-01"
     storage_account_name = "stoterraformdevwe432"
     container_name       = "tfstate"
     key                  = "aks-terraform.tfstate"
-  }*/
+    */
+  }
 }
 
 provider "azurerm" {
